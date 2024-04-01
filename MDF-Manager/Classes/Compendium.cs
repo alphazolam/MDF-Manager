@@ -111,11 +111,11 @@ namespace MDF_Manager.Classes
         public CompendiumTopLevel RE2DMC5 { get; set; }
         public CompendiumTopLevel RE3 { get; set; }
         public CompendiumTopLevel MHRiseRE8 { get; set; }
-        public CompendiumTopLevel REV { get; set; }
         public CompendiumTopLevel RERT { get; set; }
         public CompendiumTopLevel Sunbreak { get; set; }
         public CompendiumTopLevel SF6 { get; set; }
         public CompendiumTopLevel RE4 { get; set; }
+        public CompendiumTopLevel DD2 { get; set; }
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
@@ -127,12 +127,12 @@ namespace MDF_Manager.Classes
             RE2DMC5 = new CompendiumTopLevel("Version 10 (RE2/DMC5)");
             RE3 = new CompendiumTopLevel("Version 13 (RE3)");
             MHRiseRE8 = new CompendiumTopLevel("Version 19 (MHRise/RE8)");
-            REV = new CompendiumTopLevel("Version 20 (REVerse)");
             RERT = new CompendiumTopLevel("Version 21 (RE Raytracing)");
             Sunbreak = new CompendiumTopLevel("Version 23 (MHRS)");
             SF6 = new CompendiumTopLevel("Version 31 (SF6)");
             RE4 = new CompendiumTopLevel("Version 32 (RE4)");
-            entries = new ObservableCollection<CompendiumTopLevel> { RE7, RE2DMC5, RE3, MHRiseRE8, REV, RERT, Sunbreak, SF6, RE4 };
+            DD2 = new CompendiumTopLevel("Version 40 (DD2)");
+            entries = new ObservableCollection<CompendiumTopLevel> { RE7, RE2DMC5, RE3, MHRiseRE8, RERT, Sunbreak, SF6, RE4, DD2 };
 
         }
         public void SetEntries(ObservableCollection<CompendiumTopLevel> newEntries)
@@ -157,9 +157,6 @@ namespace MDF_Manager.Classes
                     case "Version 19 (MHRise/RE8)":
                         MHRiseRE8.Items = entry.Items;
                         break;
-                    case "Version 20 (REVerse)":
-                        REV.Items = entry.Items;
-                        break;
                     case "Version 21 (RE Raytracing)":
                         RERT.Items = entry.Items;
                         break;
@@ -171,6 +168,9 @@ namespace MDF_Manager.Classes
                         break;
                     case "Version 32 (RE4)":
                         RE4.Items = entry.Items;
+                        break;
+                    case "Version 40 (DD2)":
+                        DD2.Items = entry.Items;
                         break;
                 }
             }
@@ -192,11 +192,11 @@ namespace MDF_Manager.Classes
             RE2DMC5.Sort();
             RE3.Sort();
             MHRiseRE8.Sort();
-            REV.Sort();
             RERT.Sort();
             Sunbreak.Sort();
             SF6.Sort();
             RE4.Sort();
+            DD2.Sort();
             OnPropertyChanged("entries");
         }
         public event PropertyChangedEventHandler PropertyChanged;

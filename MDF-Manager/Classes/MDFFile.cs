@@ -18,6 +18,7 @@ namespace MDF_Manager.Classes
         public DataTemplate HeaderTemplate { get; set; }
         public string FileName = "";
         static byte[] magic = { (byte)'M', (byte)'D', (byte)'F', 0x00 };
+        public int largestPropsSize;
         UInt16 unkn = 1;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -48,9 +49,17 @@ namespace MDF_Manager.Classes
             br.ReadUInt64();
             for(int i = 0; i < MaterialCount; i++)
             {
-                Materials.Add(new Material(br, types,i));
+                Materials.Add(new Material(br, types, i, this));
+                if (Materials[i].matSize > largestPropsSize)
+                    largestPropsSize = Materials[i].matSize;
             }
-
+            /*for (int i = 0; i < MaterialCount; i++)
+            {
+                if (i < MaterialCount - 1)
+                    Materials[i].matGapSize = (int)(Materials[i + 1].propsStart - Materials[i].propsEnd);
+                else
+                    Materials[i].matGapSize = 1024;
+            }*/
         }
 
         public List<byte> GenerateStringTable(ref List<int> offsets)
@@ -190,7 +199,7 @@ namespace MDF_Manager.Classes
                 stringTableOffset++;
             }
             long propertiesOffset = stringTableOffset + stringTable.Count;
-            while ((propertiesOffset % 16) != 0)
+            while (propertiesOffset % 16 != Materials[0].propsStart % 16)
             {
                 propertiesOffset++;
             }
@@ -199,9 +208,16 @@ namespace MDF_Manager.Classes
             {
                 bw.Write(stringTable[i]);
             }
+            int starter = Materials[0].Properties[0].dataStartOffs;
+
             for (int i = 0; i < Materials.Count; i++)
             {
-                Materials[i].Export(bw,type, ref materialOffset, ref textureOffset, ref propHeadersOffset, stringTableOffset, strTableOffsets, ref propertiesOffset);
+                //int adjustedSize = Materials[i].matSize;
+                /*while (adjustedSize % 16 != starter % 16)
+                    adjustedSize++;
+                while (adjustedSize % 64 != 0)
+                    adjustedSize++;*/
+                Materials[i].Export(bw,type, ref materialOffset, ref textureOffset, ref propHeadersOffset, stringTableOffset, strTableOffsets, ref propertiesOffset, Materials[i].matSize);
             }
         }
         public static IList<ShadingType> ShadingTypes

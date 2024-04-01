@@ -66,10 +66,12 @@ namespace MDF_Manager.Classes
         int NameOffsetIndex { get; set; }
         int ValOffset { get; set; }
         string name { get; set; }
+        Material mat { get; set; }
         object value { get; set; }
         int[] indexes { get; set; }
         int GetSize();
         int GetPropHeaderSize();
+        int dataStartOffs { get; set; }
         void Export(BinaryWriter bw, MDFTypes type, ref long propHeadOff, ref long propOff, long basePropOff, long stringTableOff, List<int> strTableOffs);
     }
     public class FloatProperty : IVariableProp
@@ -77,21 +79,29 @@ namespace MDF_Manager.Classes
         public int NameOffsetIndex { get; set; }
         public int ValOffset { get; set; }
         private string _Name;
+        private Material _Mat;
         private Float _Default;
+        private uint _GapSize;
         public string name { get => _Name; set => _Name = value; }
+        public Material mat { get => _Mat; set => _Mat = value; }
         public object value { get => _Default; set => _Default = (Float)value; }
         public int[] indexes { get; set;}
-        public FloatProperty(string Name, Float Value,int matIndex, int propIndex)
+        public int dataStartOffs { get; set; }
+        public uint gapSize { get => _GapSize; set { _GapSize = value; } }
+        public FloatProperty(string Name, Float Value,int matIndex, int propIndex, long GapSize, int start, Material owner)
         {
             indexes = new int[2];
             name = Name;
+            mat = owner;
             value = Value;
             indexes[0] = matIndex;
             indexes[1] = propIndex;
+            gapSize = (uint)GapSize;
+            dataStartOffs = start;
         }
         public int GetSize()
         {
-            return 4;
+            return 4 + (int)_GapSize; ;
         }
         public int GetPropHeaderSize()
         {
@@ -107,7 +117,7 @@ namespace MDF_Manager.Classes
             bw.Write(HelperFunctions.Murmur3Hash(Encoding.ASCII.GetBytes(name)));//potentially UTF8 rather than ASCII, but further testing would be required
             if(type >= MDFTypes.RE3)
             {
-                bw.Write(innerPropOff);
+                bw.Write(innerPropOff + _GapSize);
                 bw.Write(1);
             }
             else
@@ -119,6 +129,10 @@ namespace MDF_Manager.Classes
             propHeadOff += GetPropHeaderSize();
 
             bw.BaseStream.Seek(propOff, SeekOrigin.Begin);
+            if (gapSize > 0)
+                for (int i = 0; i < gapSize / 4; i++)
+                    bw.Write(0);
+
             bw.Write(_Default.data);
             propOff += GetSize();
         }
@@ -128,7 +142,11 @@ namespace MDF_Manager.Classes
         public int NameOffsetIndex { get; set; }
         public int ValOffset { get; set; }
         private string _Name;
+        private Material _Mat;
         private Float4 _Default;
+        private uint _GapSize;
+        private uint _UIGapSize;
+        public int dataStartOffs { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -137,16 +155,33 @@ namespace MDF_Manager.Classes
         }
 
         public string name { get => _Name; set => _Name = value; }
+        public Material mat { get => _Mat; set => _Mat = value; }
         public object value { get => _Default; set { _Default = (Float4)value; OnPropertyChanged("value"); _Default.UpdateColor(); } }
         public int[] indexes { get; set; }
-
-        public Float4Property(string Name, Float4 Value, int matIndex, int propIndex)
+        public uint gapSize { get => _GapSize; set { _GapSize = value; } }
+        public uint UIGapSize
         {
+            get => _GapSize;
+            set
+            {
+                uint oldSize = gapSize;
+                gapSize = value;
+                if ((gapSize - oldSize) > 0)
+                    mat.MatSize += (int)(gapSize - oldSize); //unused
+            }
+        }
+
+        public Float4Property(string Name, Float4 Value, int matIndex, int propIndex, long GapSize, int start, Material owner)
+        {
+
             indexes = new int[2];
             name = Name;
+            mat = owner;
             value = Value;
             indexes[0] = matIndex;
             indexes[1] = propIndex;
+            gapSize = (uint)GapSize;
+            dataStartOffs = start;
         }
         public int GetPropHeaderSize()
         {
@@ -154,11 +189,12 @@ namespace MDF_Manager.Classes
         }
         public int GetSize()
         {
-            return 16;
+            return 16 + (int)_GapSize;
         }
 
         public void Export(BinaryWriter bw, MDFTypes type, ref long propHeadOff, ref long propOff, long basePropOff, long stringTableOff, List<int> strTableOffs)
         {
+            dataStartOffs = (int)(propOff + basePropOff);
             uint innerPropOff = (uint)(propOff - basePropOff);
             bw.BaseStream.Seek(propHeadOff, SeekOrigin.Begin);
             bw.Write(stringTableOff + strTableOffs[NameOffsetIndex]);
@@ -166,7 +202,7 @@ namespace MDF_Manager.Classes
             bw.Write(HelperFunctions.Murmur3Hash(Encoding.ASCII.GetBytes(name)));//potentially UTF8 rather than ASCII, but further testing would be required
             if (type >= MDFTypes.RE3)
             {
-                bw.Write(innerPropOff);
+                bw.Write(innerPropOff + _GapSize);
                 bw.Write(4);
             }
             else
@@ -178,6 +214,11 @@ namespace MDF_Manager.Classes
             propHeadOff += GetPropHeaderSize();
 
             bw.BaseStream.Seek(propOff, SeekOrigin.Begin);
+
+            if (gapSize > 0) 
+                for (int i = 0; i < gapSize / 4; i++)
+                    bw.Write(0);
+
             bw.Write(_Default.x);
             bw.Write(_Default.y);
             bw.Write(_Default.z);

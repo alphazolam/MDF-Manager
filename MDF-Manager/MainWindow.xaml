@@ -11,7 +11,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Closing="Window_Closing"
-        Title="MDF Manager" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="1080" MaxWidth="1920">
+        Title="MDF Manager (Dragon's Dogma 2)" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="1080" MaxWidth="1920">
     <Window.Resources>
         <ResourceDictionary>
             <SolidColorBrush x:Key="TextColor" Color="Black"/>
@@ -112,7 +112,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Label Grid.Column="0" Margin="20,0" Foreground="{DynamicResource TextColor}" Content="{Binding name}"/>
-                    <xctk:SingleUpDown Grid.Column="1" Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" ShowButtonSpinner="False" Width="Auto" TextAlignment="Right" Value="{Binding value.data,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                 <xctk:SingleUpDown Grid.Column="1" Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" ShowButtonSpinner="False" Width="Auto" TextAlignment="Right" Value="{Binding value.data,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
             </DataTemplate>
             <DataTemplate x:Key="Float4PropItem">
@@ -209,7 +209,7 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <TextBox Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="Auto" VerticalAlignment="Center" Margin="10,0,0,0"  Width="Auto" Text="{Binding ElementName=MatSelect, Path=SelectedItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                       <TextBox Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="Auto" VerticalAlignment="Center" Margin="10,0,0,0"  Width="Auto" Text="{Binding ElementName=MatSelect, Path=SelectedItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
                             <Label Foreground="{DynamicResource TextColor}" Content="UTF16 MM3 Hash: "/>
                             <Label Foreground="{DynamicResource TextColor}" Margin="5,0,0,0" Content="{Binding ElementName=MatSelect, Path=SelectedItem.UTF16Hash}" ContentStringFormat="0x{0:X8}"/>

@@ -57,16 +57,13 @@ namespace MDF_Manager.Classes
         GUI = 10,
         GUIMesh = 11,
         GUIMeshTransparent = 12,
-        ExpensiveTransparent = 13,
+        ExpensiveTransparent =13,
         Forward = 14,
         RenderTarget = 15,
         PostProcess = 16,
         PrimitiveMaterial = 17,
         PrimitiveSolidMaterial = 18,
-        SpineMaterial = 19,
-        //ReflectiveTransparent = 20 maybe a New Shading Type, only found in RE4?
-        //Leon's mdf is crashing if the material "GloveGlass" is in the MDF.
-        //natives\STM\_Chainsaw\Character\ch\cha0\cha002\00\cha002_00.mdf2.32
+        SpineMaterial = 19
     }
 
     public enum MDFTypes
@@ -75,11 +72,10 @@ namespace MDF_Manager.Classes
         RE2DMC5 = 10,
         RE3 = 13,
         MHRiseRE8 = 19,
-        REV = 20,   //REVerse
         RERT = 21, //Resident Evil raytracing update
         Sunbreak = 23,
         SF6 = 31,
-        RE4 = 32
+        DD2 = 40,
     }
 
     public class BooleanHolder : INotifyPropertyChanged
@@ -121,17 +117,43 @@ namespace MDF_Manager.Classes
         public int NameOffsetIndex; //applied and used only on export
         public int MMOffsetIndex;
         public int materialIndex; //used for deleting and adding new
+        public int matSize;
+        public long propsStart;
+        public long propsEnd;
+        public int unk0;
+        public int unk1;
+        public int unk2;
+        public MDFFile _Owner;
+
         private void UpdateHash()
         {
             _Hash = HelperFunctions.Murmur3Hash(Encoding.Unicode.GetBytes(_Name));
             OnPropertyChanged("UTF16Hash");
         }
         public string Name { get => _Name; set { _Name = value; OnPropertyChanged("Name"); UpdateHash(); } }
+        public MDFFile Owner { get => _Owner; set => _Owner = value; }
         public uint UTF16Hash { get => _Hash; set => _Hash = value; }
+        public int MatSize { 
+            get => matSize; 
+            set { 
+                matSize = value;
+                for (int i = 0; i < _Owner.Materials.Count; i++) {
+                    if (_Owner.Materials[i].matSize > _Owner.largestPropsSize)
+                        _Owner.largestPropsSize = _Owner.Materials[i].matSize;
+                }
+                for (int i = 0; i < _Owner.Materials.Count; i++)
+                    _Owner.Materials[i].matSize = _Owner.largestPropsSize;
+            } 
+        }
+
         public string MasterMaterial { get; set; }
         public ShadingType ShaderType { get; set; }
         public byte TessFactor { get; set; }
         public byte PhongFactor { get; set; }//shrug bytes are unsigned by default in C#
+        public long LastPropOffset { get; set; }
+        public int Unk0 { get; set; }
+        public int Unk1 { get; set; }
+        public int Unk2 { get; set; }
         public ObservableCollection<BooleanHolder> flags { get; set; }
         public List<TextureBinding> Textures { get; set; }
         public List<IVariableProp> Properties { get; set; }
@@ -169,6 +191,7 @@ namespace MDF_Manager.Classes
             uint ASCIIMMH3Hash = br.ReadUInt32();
             int PropDataOff = 0;
             int ParamCount = 0;
+
             if (type >= MDFTypes.RE3)
             {
                 PropDataOff = br.ReadInt32();
@@ -184,21 +207,38 @@ namespace MDF_Manager.Classes
             br.BaseStream.Seek(PropNameOff, SeekOrigin.Begin);
             string PropName = HelperFunctions.ReadUniNullTerminatedString(br);
             br.BaseStream.Seek(dataOff + PropDataOff, SeekOrigin.Begin);
+
+            if (LastPropOffset == 0)
+                LastPropOffset = dataOff;
+            long GapSize = br.BaseStream.Position - LastPropOffset;
+
+            if (propsStart == 0)
+                propsStart = LastPropOffset;
+
             switch (ParamCount)
             {
                 case 1:
                     Float fData = new Float(br.ReadSingle());
+                    LastPropOffset = br.BaseStream.Position;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new FloatProperty(PropName, fData, matIndex, propIndex);
+                    return new FloatProperty(PropName, fData, matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);
                 case 4:
                     Float4 f4Data = new Float4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                    LastPropOffset = br.BaseStream.Position;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new Float4Property(PropName, f4Data, matIndex, propIndex);
+                    return new Float4Property(PropName, f4Data, matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);
                 default:
+                    LastPropOffset = br.BaseStream.Position+4;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new FloatProperty(Name, new Float((float)1.0), matIndex, propIndex);//shouldn't really come up ever
-
+                    return new FloatProperty(Name, new Float((float)1.0), matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);//shouldn't really come up ever
             }
+            
         }
 
         public int GetSize(MDFTypes type)
@@ -208,7 +248,7 @@ namespace MDF_Manager.Classes
             {
                 baseVal += 8;
             }
-            else if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            else if (type >= MDFTypes.SF6)
             {
                 baseVal += 36;
             }
@@ -373,8 +413,9 @@ namespace MDF_Manager.Classes
 
         }
 
-        public Material(BinaryReader br,MDFTypes type,int matIndex)
+        public Material(BinaryReader br,MDFTypes type, int matIndex, MDFFile owner)
         {
+            _Owner = owner;
             flags = new ObservableCollection<BooleanHolder>();
             materialIndex = matIndex;
             Int64 MatNameOffset = br.ReadInt64();
@@ -384,6 +425,7 @@ namespace MDF_Manager.Classes
                 Int64 unknRE7 = br.ReadInt64();//I don't own RE7 so I'm just gonna hope these are 0s
             }
             int PropBlockSize = br.ReadInt32();
+            matSize = PropBlockSize;
             int PropertyCount = br.ReadInt32();
             int TextureCount = br.ReadInt32();
             if(type >= MDFTypes.MHRiseRE8)
@@ -391,14 +433,15 @@ namespace MDF_Manager.Classes
                 br.ReadInt64();
             }
             ShaderType = (ShadingType)br.ReadInt32();
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
-                br.ReadInt32();
+                unk0 = br.ReadInt32();
             }
             ReadFlagsSection(br);
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
-                br.ReadInt64();
+                unk1 = br.ReadInt32();
+                unk2 = br.ReadInt32();
             }
             Int64 PropHeadersOff = br.ReadInt64();
             Int64 TexHeadersOff = br.ReadInt64();
@@ -410,7 +453,7 @@ namespace MDF_Manager.Classes
             }
             Int64 PropDataOff = br.ReadInt64();
             Int64 MMTRPathOff = br.ReadInt64();
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
                 br.ReadInt64();
             }
@@ -432,10 +475,16 @@ namespace MDF_Manager.Classes
 
             //read properties
             br.BaseStream.Seek(PropHeadersOff, SeekOrigin.Begin);
-            for(int i = 0; i < PropertyCount; i++)
+
+            
+            for (int i = 0; i < PropertyCount; i++)
             {
                 Properties.Add(ReadProperty(br,PropDataOff,type,matIndex,i));
             }
+            //propsStart = Properties[0].dataStartOffs;
+            //propsEnd = Properties[0].dataStartOffs + Properties[0].GetSize();
+            //matSize = (int)(Properties[PropertyCount-1].dataStartOffs + Properties[PropertyCount - 1].GetSize() - Properties[0].dataStartOffs);
+
             br.BaseStream.Seek(EOM,SeekOrigin.Begin);
         }
         public byte[] GenerateFlagsSection()
@@ -573,7 +622,7 @@ namespace MDF_Manager.Classes
                 Properties[i].indexes[0] = index;
             }
         }
-        public void Export(BinaryWriter bw, MDFTypes type, ref long materialOffset, ref long textureOffset, ref long propHeaderOffset, long stringTableOffset, List<int> strTableOffsets, ref long propertiesOffset)
+        public void Export(BinaryWriter bw, MDFTypes type, ref long materialOffset, ref long textureOffset, ref long propHeaderOffset, long stringTableOffset, List<int> strTableOffsets, ref long propertiesOffset, int largestPropsSize)
         {
             bw.BaseStream.Seek(materialOffset,SeekOrigin.Begin);
             bw.Write(stringTableOffset + strTableOffsets[NameOffsetIndex]);
@@ -591,6 +640,7 @@ namespace MDF_Manager.Classes
             {
                 propSize += 1;
             }
+            long pos = bw.BaseStream.Position;
             bw.Write(propSize);
             bw.Write(Properties.Count);
             bw.Write(Textures.Count);
@@ -599,14 +649,15 @@ namespace MDF_Manager.Classes
                 bw.Write((long)0);
             }
             bw.Write((uint)ShaderType);
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
-                bw.Write((int)0);
+                bw.Write(unk0);
             }
             bw.Write(GenerateFlagsSection());
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
-                bw.Write((long)0);
+                bw.Write(unk1);
+                bw.Write(unk2);
             }
             bw.Write(propHeaderOffset);
             bw.Write(textureOffset);
@@ -616,7 +667,7 @@ namespace MDF_Manager.Classes
             }
             bw.Write(propertiesOffset);
             bw.Write(stringTableOffset + strTableOffsets[MMOffsetIndex]);
-            if (type >= MDFTypes.SF6 || type >= MDFTypes.RE4)
+            if (type >= MDFTypes.SF6)
             {
                 bw.Write((long)0);
             }
@@ -633,9 +684,14 @@ namespace MDF_Manager.Classes
             }
             if ((basePropOffset + propSize) != propertiesOffset)
             {
-                Int64 diff = basePropOffset + propSize - propertiesOffset;
-                propertiesOffset += diff;
+                //Int64 diff = basePropOffset + propSize - propertiesOffset;
+                //propertiesOffset += diff;
+                propertiesOffset = basePropOffset + largestPropsSize;
             }
+            long endPos = bw.BaseStream.Position;
+            bw.BaseStream.Seek(pos, SeekOrigin.Begin);
+            bw.Write((int)(largestPropsSize));
+            bw.BaseStream.Seek(endPos, SeekOrigin.Begin);
         }
     }
 }
