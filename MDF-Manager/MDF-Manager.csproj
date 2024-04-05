@@ -28,6 +28,11 @@
   <ItemGroup>
     <Resource Include="Resources\downarrow.png" />
     <Resource Include="Resources\uparrow.png" />
+	<Resource Include="Resources\icons\icon_open.png" />
+	<Resource Include="Resources\icons\icon_save.png" />
+	<Resource Include="Resources\icons\icon_saveas.png" />
+	<Resource Include="Resources\icons\icon_saveall.png" />
+	<Resource Include="Resources\icons\icon_batch.png" />
   </ItemGroup>
 
 </Project>

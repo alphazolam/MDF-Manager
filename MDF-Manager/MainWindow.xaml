@@ -11,7 +11,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Closing="Window_Closing"
-        Title="MDF Manager (Dragon's Dogma 2)" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="1080" MaxWidth="1920">
+        Title="MDF Manager (Dragon's Dogma 2)" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="2160" MaxWidth="3840">
     <Window.Resources>
         <ResourceDictionary>
             <SolidColorBrush x:Key="TextColor" Color="Black"/>
@@ -262,11 +262,76 @@
         </Grid.RowDefinitions>
         <Menu Height="20" Grid.ColumnSpan="3" Background="{DynamicResource ForegroundColor}" VerticalAlignment="Top">
             <MenuItem Template="{StaticResource MenuItemControlTemplate1}" Background="{DynamicResource ForegroundColor}" Foreground="{DynamicResource TextColor}" Header="File">
-                <MenuItem Header="Open" Click="OpenMDFFile"/>
-                <MenuItem Header="Save" Click="Save"/>
-                <MenuItem Header="Save As" Click="SaveAs"/>
-                <MenuItem Header="Save All" Click="SaveAll"/>
-                <MenuItem Header="Batch Convert" Click="BatchConvert"/>
+                <MenuItem Header="Open" Click="OpenMDFFile">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Source="Resources/Icons/Icon_Open.png" Width="16" Height="16"  Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding}" Grid.Column="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
+                </MenuItem>
+                <MenuItem Header="Save" Click="Save">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Source="Resources/Icons/Icon_Save.png" Width="16" Height="16"  Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding}" Grid.Column="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
+                </MenuItem>
+                <MenuItem Header="Save As" Click="SaveAs">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Source="Resources/Icons/Icon_SaveAs.png" Width="16" Height="16"  Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding}" Grid.Column="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
+                </MenuItem>
+                <MenuItem  Header="Save All" Click="SaveAll">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Source="Resources/Icons/Icon_SaveAll.png" Width="16" Height="16"  Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding}" Grid.Column="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
+                </MenuItem>
+                <MenuItem  Header="Batch Convert" Click="BatchConvert">
+                    <MenuItem.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Source="Resources/Icons/Icon_Batch.png" Width="16" Height="16"  Margin="0,0,5,0"/>
+                                <TextBlock Text="{Binding}" Grid.Column="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </MenuItem.HeaderTemplate>
+                </MenuItem>
             </MenuItem>
             <MenuItem Template="{StaticResource MenuItemControlTemplate1}" Background="{DynamicResource ForegroundColor}" Foreground="{DynamicResource TextColor}" Header="Library">
                 <MenuItem Header="New Library File" Click="NewLibrary"/>
