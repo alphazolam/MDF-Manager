@@ -18,7 +18,7 @@ knowledge of shader coding.
 The color of certain UI elements can be changed by clicking Theme at the top of the program.
 
 # Installation:
-### Prerequisite: [.NET5](https://dotnet.microsoft.com/en-us/download/dotnet/5.0)
+### Prerequisite: [.NET5 SDK 5.0.408](https://dotnet.microsoft.com/en-us/download/dotnet/5.0) 
 
 Just download the most recent release from the sidebar to the right. If you would like to build the project, open the solution in Visual Studio, right click on the 
 MDF-Manager project and select "Restore NuGet Packages", then build the project.
