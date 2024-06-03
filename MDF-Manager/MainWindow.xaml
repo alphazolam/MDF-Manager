@@ -11,7 +11,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Closing="Window_Closing"
-        Title="MDF Manager (Dragon's Dogma 2)" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="2160" MaxWidth="3840">
+        Title="MDF Manager 1.70" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="2160" MaxWidth="3840">
     <Window.Resources>
         <ResourceDictionary>
             <SolidColorBrush x:Key="TextColor" Color="Black"/>
@@ -112,7 +112,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Label Grid.Column="0" Margin="20,0" Foreground="{DynamicResource TextColor}" Content="{Binding name}"/>
-                 <xctk:SingleUpDown Grid.Column="1" Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" ShowButtonSpinner="False" Width="Auto" TextAlignment="Right" Value="{Binding value.data,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
+                    <xctk:SingleUpDown Grid.Column="1" Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" ShowButtonSpinner="False" Width="Auto" TextAlignment="Right" Value="{Binding value.data,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
             </DataTemplate>
             <DataTemplate x:Key="Float4PropItem">
@@ -209,7 +209,7 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                       <TextBox Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="Auto" VerticalAlignment="Center" Margin="10,0,0,0"  Width="Auto" Text="{Binding ElementName=MatSelect, Path=SelectedItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBox Foreground="{DynamicResource TextColor}" Background="{DynamicResource ForegroundColor}" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Height="Auto" VerticalAlignment="Center" Margin="10,0,0,0"  Width="Auto" Text="{Binding ElementName=MatSelect, Path=SelectedItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Orientation="Horizontal">
                             <Label Foreground="{DynamicResource TextColor}" Content="UTF16 MM3 Hash: "/>
                             <Label Foreground="{DynamicResource TextColor}" Margin="5,0,0,0" Content="{Binding ElementName=MatSelect, Path=SelectedItem.UTF16Hash}" ContentStringFormat="0x{0:X8}"/>
@@ -251,16 +251,17 @@
     </Window.Resources>
     <Grid Background="{DynamicResource BackgroundColor}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width=".4*" MinWidth="250"/>
+            <ColumnDefinition Width="39*" MinWidth="250"/>
+            <ColumnDefinition Width="11*"/>
             <ColumnDefinition Width="5"/>
-            <ColumnDefinition Width="2*" MinWidth="900"/>
+            <ColumnDefinition Width="189*" MinWidth="900"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="200"/>
             <RowDefinition Height="5"/>
             <RowDefinition Height="*" MinHeight="200"/>
         </Grid.RowDefinitions>
-        <Menu Height="20" Grid.ColumnSpan="3" Background="{DynamicResource ForegroundColor}" VerticalAlignment="Top">
+        <Menu Height="20" Grid.ColumnSpan="4" Background="{DynamicResource ForegroundColor}" VerticalAlignment="Top">
             <MenuItem Template="{StaticResource MenuItemControlTemplate1}" Background="{DynamicResource ForegroundColor}" Foreground="{DynamicResource TextColor}" Header="File">
                 <MenuItem Header="Open" Click="OpenMDFFile">
                     <MenuItem.HeaderTemplate>
@@ -348,18 +349,18 @@
             </MenuItem>
             <MenuItem Template="{StaticResource MenuItemControlTemplate1}" Background="{DynamicResource ForegroundColor}" Foreground="{DynamicResource TextColor}" Header="Theme" Click="ThemeOpen"/>
         </Menu>
-        <TreeView x:Name="LibraryView" Drop="LibraryView_Drop" DragOver="treeView_DragOver" AllowDrop="True" Background="{DynamicResource ForegroundColor}" Width="Auto" Height="Auto" ItemsSource="{Binding lib.entries}" ItemTemplateSelector="{StaticResource LibSelector}" MouseMove="treeView_MouseMove" Grid.Column="0" Margin="10,60,10,10"/>
-        <Label Foreground="{DynamicResource TextColor}" Content="Library" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,30,10,10"/>
-        <StackPanel Grid.Column="0" Width="Auto" Height="20" VerticalAlignment="Top" Margin="55,31,3,0" Orientation="Horizontal">
+        <TreeView x:Name="LibraryView" Drop="LibraryView_Drop" DragOver="treeView_DragOver" AllowDrop="True" Background="{DynamicResource ForegroundColor}" Width="Auto" Height="Auto" ItemsSource="{Binding lib.entries}" ItemTemplateSelector="{StaticResource LibSelector}" MouseMove="treeView_MouseMove" Grid.Column="0" Margin="10,60,10,10" Grid.ColumnSpan="2"/>
+        <Label Foreground="{DynamicResource TextColor}" Content="Library" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,30,0,0"/>
+        <StackPanel Grid.Column="0" Width="Auto" Height="20" VerticalAlignment="Top" Margin="55,31,3,0" Orientation="Horizontal" Grid.ColumnSpan="2">
             <Button Background="{DynamicResource ButtonColor}" Foreground="{DynamicResource TextColor}" Content="Add" Click="AddToLibrary" Width="60" Height="20" FontSize="10" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Top"/>
             <Button Background="{DynamicResource ButtonColor}" Foreground="{DynamicResource TextColor}" Content="Remove" Click="RemoveFromLibrary" Width="60" Height="20" FontSize="10" HorizontalAlignment="Left" Margin="5,0,0,0" VerticalAlignment="Top"/>
         </StackPanel>
-        <GridSplitter Background="{DynamicResource ForegroundColor}" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="2" Grid.Row="1"/>
-        <TreeView x:Name="CompendiumView" ItemsSource="{Binding compendium.entries}" Width="Auto" Height="Auto" ItemTemplateSelector="{StaticResource CompSelector}" Background="{DynamicResource ForegroundColor}" MouseMove="CompendiumView_MouseMove" Grid.Row="2" Margin="10,50,10,10"/>
-        <Label Foreground="{DynamicResource TextColor}" Content="Compendium" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,10,10"/>
-        <GridSplitter Background="{DynamicResource ForegroundColor}" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.RowSpan="3" Grid.Column="1"  Margin="0,20,0,0"/>
-        <Rectangle Drop="TabControl_Drop" Fill="{DynamicResource ForegroundColor}" AllowDrop="True" Grid.Column="2" Grid.RowSpan="3" DragOver="treeView_DragOver" Margin="8,30,8,8"/>
-        <TabControl MinWidth="600" Drop="TabControl_Drop" Background="{DynamicResource ForegroundColor}" AllowDrop="True" Grid.Column="2" Grid.RowSpan="3" x:Name="MaterialView" DragOver="treeView_DragOver" ItemsSource="{Binding MDFs}" ItemTemplate="{StaticResource MDFHeader}" ContentTemplate="{StaticResource MDFMain}" SelectionChanged="MaterialView_SelectionChanged" Margin="8,30,8,8">
+        <GridSplitter Background="{DynamicResource ForegroundColor}" Height="5" HorizontalAlignment="Stretch" Grid.ColumnSpan="3" Grid.Row="1" Margin="0,0,0,389" Grid.RowSpan="2"/>
+        <TreeView x:Name="CompendiumView" ItemsSource="{Binding compendium.entries}" Width="Auto" Height="Auto" ItemTemplateSelector="{StaticResource CompSelector}" Background="{DynamicResource ForegroundColor}" MouseMove="CompendiumView_MouseMove" Grid.Row="2" Margin="10,50,10,10" Grid.ColumnSpan="2"/>
+        <Label Foreground="{DynamicResource TextColor}" Content="Compendium" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,0,0"/>
+        <GridSplitter Background="{DynamicResource ForegroundColor}" Width="5" HorizontalAlignment="Stretch" Grid.RowSpan="3" Grid.Column="2"  Margin="0,20,0,0"/>
+        <Rectangle Drop="TabControl_Drop" Fill="{DynamicResource ForegroundColor}" AllowDrop="True" Grid.Column="3" Grid.RowSpan="3" DragOver="treeView_DragOver" Margin="8,30,8,8"/>
+        <TabControl MinWidth="600" Drop="TabControl_Drop" Background="{DynamicResource ForegroundColor}" AllowDrop="True" Grid.Column="3" Grid.RowSpan="3" x:Name="MaterialView" DragOver="treeView_DragOver" ItemsSource="{Binding MDFs}" ItemTemplate="{StaticResource MDFHeader}" ContentTemplate="{StaticResource MDFMain}" SelectionChanged="MaterialView_SelectionChanged" Margin="8,30,8,8">
             <TabControl.Template>
                 <ControlTemplate TargetType="TabControl">
                     <Grid>

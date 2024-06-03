@@ -125,6 +125,21 @@ namespace MDF_Manager.Classes
                     }
                 }
             }
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                for (int j = 0; j < Materials[i].GPUBuffers.Count; j++)
+                {
+                    if (!strings.Contains(Materials[i].GPUBuffers[j].GPUBufferName))
+                    {
+                        strings.Add(Materials[i].GPUBuffers[j].GPUBufferName);
+                        Materials[i].GPUBuffers[j].NameOffsetIndex = strings.Count - 1;
+                    }
+                    else
+                    {
+                        Materials[i].GPUBuffers[j].NameOffsetIndex = strings.FindIndex(name => name == Materials[i].GPUBuffers[j].GPUBufferName);
+                    }
+                }
+            }
             List<byte> outputBuff = new List<byte>();
             offsets.Add(0);
             for(int i = 0; i < strings.Count; i++)
@@ -160,6 +175,7 @@ namespace MDF_Manager.Classes
             List<int> strTableOffsets = new List<int>();
             List<byte> stringTable = GenerateStringTable(ref strTableOffsets);
             //this function handles the biggest problem of writing materials, getting the name offsets
+            long GPBFsize = 0;
             long materialOffset = bw.BaseStream.Position;
             while ((materialOffset % 16) != 0)
             {
@@ -169,6 +185,7 @@ namespace MDF_Manager.Classes
             for(int i = 0; i < Materials.Count; i++)
             {
                 textureOffset += Materials[i].GetSize(type);
+                GPBFsize += Materials[i].GPBFCount * 16;
             }
             while((textureOffset%16) != 0)
             {
@@ -186,18 +203,32 @@ namespace MDF_Manager.Classes
             {
                 propHeadersOffset++;
             }
-            long stringTableOffset = propHeadersOffset;
+            long GPBFOffset = propHeadersOffset;
             for (int i = 0; i < Materials.Count; i++)
             {
                 for (int j = 0; j < Materials[i].Properties.Count; j++)
                 {
-                    stringTableOffset += Materials[i].Properties[j].GetPropHeaderSize();
+                    GPBFOffset += Materials[i].Properties[j].GetPropHeaderSize();
+                }
+            }
+            while ((GPBFOffset % 16) != 0)
+            {
+                GPBFOffset++;
+            }
+
+            long stringTableOffset = GPBFOffset;
+            for (int i = 0; i < Materials.Count; i++)
+            {
+                for (int j = 0; j < Materials[i].GPBFCount; j++)
+                {
+                    stringTableOffset += Materials[i].GetGPBFSize();
                 }
             }
             while ((stringTableOffset % 16) != 0)
             {
-                stringTableOffset++;
+                GPBFOffset++;
             }
+
             long propertiesOffset = stringTableOffset + stringTable.Count;
             while (propertiesOffset % 16 != Materials[0].propsStart % 16)
             {
@@ -209,6 +240,7 @@ namespace MDF_Manager.Classes
                 bw.Write(stringTable[i]);
             }
             int starter = Materials[0].Properties[0].dataStartOffs;
+            long runningGPBFStart = GPBFOffset;
 
             for (int i = 0; i < Materials.Count; i++)
             {
@@ -217,7 +249,8 @@ namespace MDF_Manager.Classes
                     adjustedSize++;
                 while (adjustedSize % 64 != 0)
                     adjustedSize++;*/
-                Materials[i].Export(bw,type, ref materialOffset, ref textureOffset, ref propHeadersOffset, stringTableOffset, strTableOffsets, ref propertiesOffset, Materials[i].matSize);
+                Materials[i].Export(bw,type, ref materialOffset, ref textureOffset, ref propHeadersOffset, runningGPBFStart, stringTableOffset, strTableOffsets, ref propertiesOffset, Materials[i].matSize);
+                runningGPBFStart += Materials[i].GPBFCount * Materials[i].GetGPBFSize();
             }
         }
         public static IList<ShadingType> ShadingTypes
