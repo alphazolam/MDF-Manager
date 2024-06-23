@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -72,9 +73,10 @@ namespace MDF_Manager.Classes
         RE2DMC5 = 10,
         RE3 = 13,
         MHRiseRE8 = 19,
-        RERT = 21, //Resident Evil raytracing update
+        RERT = 21,
         Sunbreak = 23,
-        SF6 = 31
+        SF6 = 31,
+        DD2 = 40,
     }
 
     public class BooleanHolder : INotifyPropertyChanged
@@ -116,20 +118,53 @@ namespace MDF_Manager.Classes
         public int NameOffsetIndex; //applied and used only on export
         public int MMOffsetIndex;
         public int materialIndex; //used for deleting and adding new
+        public int matSize;
+        public long propsStart;
+        public long propsEnd;
+        public int unk0;
+        public int unk1;
+        public int unk2;
+        public int gpbf0;
+        public int gpbf1;
+        public int GPBFCount = 0;
+        public MDFFile _Owner;
+
         private void UpdateHash()
         {
             _Hash = HelperFunctions.Murmur3Hash(Encoding.Unicode.GetBytes(_Name));
             OnPropertyChanged("UTF16Hash");
         }
         public string Name { get => _Name; set { _Name = value; OnPropertyChanged("Name"); UpdateHash(); } }
+        public MDFFile Owner { get => _Owner; set => _Owner = value; }
         public uint UTF16Hash { get => _Hash; set => _Hash = value; }
+        public int MatSize { 
+            get => matSize; 
+            set { 
+                matSize = value;
+                for (int i = 0; i < _Owner.Materials.Count; i++) {
+                    if (_Owner.Materials[i].matSize > _Owner.largestPropsSize)
+                        _Owner.largestPropsSize = _Owner.Materials[i].matSize;
+                }
+                for (int i = 0; i < _Owner.Materials.Count; i++)
+                    _Owner.Materials[i].matSize = _Owner.largestPropsSize;
+            } 
+        }
         public string MasterMaterial { get; set; }
         public ShadingType ShaderType { get; set; }
         public byte TessFactor { get; set; }
         public byte PhongFactor { get; set; }//shrug bytes are unsigned by default in C#
+        public long LastPropOffset { get; set; }
+        public int Unk0 { get; set; }
+        public int Unk1 { get; set; }
+        public int Unk2 { get; set; }
+        public int GPBF0 { get; set; }
+        public int GPBF1 { get; set; }
+        public int GetGPBFSize() { return 16; }
         public ObservableCollection<BooleanHolder> flags { get; set; }
         public List<TextureBinding> Textures { get; set; }
         public List<IVariableProp> Properties { get; set; }
+
+        public List<GPUBuffer> GPUBuffers { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -164,6 +199,7 @@ namespace MDF_Manager.Classes
             uint ASCIIMMH3Hash = br.ReadUInt32();
             int PropDataOff = 0;
             int ParamCount = 0;
+
             if (type >= MDFTypes.RE3)
             {
                 PropDataOff = br.ReadInt32();
@@ -179,21 +215,64 @@ namespace MDF_Manager.Classes
             br.BaseStream.Seek(PropNameOff, SeekOrigin.Begin);
             string PropName = HelperFunctions.ReadUniNullTerminatedString(br);
             br.BaseStream.Seek(dataOff + PropDataOff, SeekOrigin.Begin);
+
+            if (LastPropOffset == 0)
+                LastPropOffset = dataOff;
+            long GapSize = br.BaseStream.Position - LastPropOffset;
+
+            if (propsStart == 0)
+                propsStart = LastPropOffset;
+
             switch (ParamCount)
             {
                 case 1:
                     Float fData = new Float(br.ReadSingle());
+                    LastPropOffset = br.BaseStream.Position;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new FloatProperty(PropName, fData, matIndex, propIndex);
+                    return new FloatProperty(PropName, fData, matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);
                 case 4:
                     Float4 f4Data = new Float4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
+                    LastPropOffset = br.BaseStream.Position;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new Float4Property(PropName, f4Data, matIndex, propIndex);
+                    return new Float4Property(PropName, f4Data, matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);
                 default:
+                    LastPropOffset = br.BaseStream.Position+4;
+                    propsEnd = br.BaseStream.Position;
+                    while (propsEnd % 16 != propsStart % 16) propsEnd++;
                     br.BaseStream.Seek(EOP, SeekOrigin.Begin);
-                    return new FloatProperty(Name, new Float((float)1.0), matIndex, propIndex);//shouldn't really come up ever
-
+                    return new FloatProperty(Name, new Float((float)1.0), matIndex, propIndex, GapSize, (int)(dataOff + PropDataOff), this);//shouldn't really come up ever
             }
+            
+        }
+
+        //SILVER: List for storing GPUBuffers
+        private List<GPUBuffer> GPUBuffersList = new List<GPUBuffer>();
+
+        public GPUBuffer ReadGPUBuffer(BinaryReader br)
+        {
+            Int64 GPBFNameOffset = br.ReadInt64();
+            //char[] GPBFNameUTF16Hash = Encoding.Unicode.GetChars(br.ReadBytes(4));
+            //char[] GPBFNameASCIIHash = Encoding.ASCII.GetChars(br.ReadBytes(4));
+            uint GPBFNameUTF16Hash = br.ReadUInt32();
+            uint GPBFNameASCIIHash = br.ReadUInt32();
+
+            Int64 EndOfGPUBuffer = br.BaseStream.Position;
+            br.BaseStream.Seek(GPBFNameOffset, SeekOrigin.Begin);
+            string GPBFName = HelperFunctions.ReadUniNullTerminatedString(br);
+            br.BaseStream.Seek(EndOfGPUBuffer, SeekOrigin.Begin);
+
+            Debug.WriteLine("GPBFNameOffset: " + GPBFNameOffset);
+            Debug.WriteLine("GPBFName: " + GPBFName);
+            Debug.WriteLine("GPBFNameUTF16Hash: " + (GPBFNameUTF16Hash.ToString()));
+            Debug.WriteLine("GPBFNameASCIIHash: " + (GPBFNameASCIIHash.ToString()));
+
+            GPUBuffer buffer = new GPUBuffer(GPBFNameOffset, GPBFName, GPBFNameUTF16Hash, GPBFNameASCIIHash);
+            GPUBuffersList.Add(buffer);
+            return buffer;
         }
 
         public int GetSize(MDFTypes type)
@@ -367,9 +446,12 @@ namespace MDF_Manager.Classes
             }
 
         }
-
-        public Material(BinaryReader br,MDFTypes type,int matIndex)
+        
+        public Material(BinaryReader br,MDFTypes type, int matIndex, MDFFile owner)
         {
+            Int64 GPBFOffset = 0;
+             
+            _Owner = owner;
             flags = new ObservableCollection<BooleanHolder>();
             materialIndex = matIndex;
             Int64 MatNameOffset = br.ReadInt64();
@@ -379,29 +461,38 @@ namespace MDF_Manager.Classes
                 Int64 unknRE7 = br.ReadInt64();//I don't own RE7 so I'm just gonna hope these are 0s
             }
             int PropBlockSize = br.ReadInt32();
+            matSize = PropBlockSize;
             int PropertyCount = br.ReadInt32();
             int TextureCount = br.ReadInt32();
             if(type >= MDFTypes.MHRiseRE8)
             {
-                br.ReadInt64();
+                gpbf0 = br.ReadInt32();
+                gpbf1 = br.ReadInt32();
+                GPBFCount = gpbf0 + gpbf0;
             }
             ShaderType = (ShadingType)br.ReadInt32();
             if (type >= MDFTypes.SF6)
             {
-                br.ReadInt32();
+                unk0 = br.ReadInt32();
             }
             ReadFlagsSection(br);
             if (type >= MDFTypes.SF6)
             {
-                br.ReadInt64();
+                unk1 = br.ReadInt32();
+                unk2 = br.ReadInt32();
             }
             Int64 PropHeadersOff = br.ReadInt64();
             Int64 TexHeadersOff = br.ReadInt64();
             if(type >= MDFTypes.MHRiseRE8)
             {
-                Int64 StringTableOff = br.ReadInt64();//not at all useful, given everything uses absolute offsets
+                /*
+                Int64 StringTableOff = br.ReadInt64();//not at all useful, given everything uses absolute offsets          
+
                 //it's possible that this is an offset for something that is not used by most mdfs, this will need to be looked into
                 //given the extra Int64, I find this very likely
+                */
+                //SILVER: This is only used in DD2
+                GPBFOffset = br.ReadInt64();
             }
             Int64 PropDataOff = br.ReadInt64();
             Int64 MMTRPathOff = br.ReadInt64();
@@ -427,10 +518,24 @@ namespace MDF_Manager.Classes
 
             //read properties
             br.BaseStream.Seek(PropHeadersOff, SeekOrigin.Begin);
-            for(int i = 0; i < PropertyCount; i++)
+            
+            for (int i = 0; i < PropertyCount; i++)
             {
                 Properties.Add(ReadProperty(br,PropDataOff,type,matIndex,i));
             }
+            //SILVER: Read GPUBuffers
+            GPUBuffers = new List<GPUBuffer>();
+            br.BaseStream.Seek(GPBFOffset, SeekOrigin.Begin);
+            for (int i = 0; i < GPBFCount; i++)
+            {
+                GPUBuffers.Add(ReadGPUBuffer(br));
+                Debug.WriteLine("GPBFCount:" + GPBFCount);
+            }
+
+            //propsStart = Properties[0].dataStartOffs;
+            //propsEnd = Properties[0].dataStartOffs + Properties[0].GetSize();
+            //matSize = (int)(Properties[PropertyCount-1].dataStartOffs + Properties[PropertyCount - 1].GetSize() - Properties[0].dataStartOffs);
+
             br.BaseStream.Seek(EOM,SeekOrigin.Begin);
         }
         public byte[] GenerateFlagsSection()
@@ -568,12 +673,14 @@ namespace MDF_Manager.Classes
                 Properties[i].indexes[0] = index;
             }
         }
-        public void Export(BinaryWriter bw, MDFTypes type, ref long materialOffset, ref long textureOffset, ref long propHeaderOffset, long stringTableOffset, List<int> strTableOffsets, ref long propertiesOffset)
+        public void Export(BinaryWriter bw, MDFTypes type, ref long materialOffset, ref long textureOffset, ref long propHeaderOffset, long GPBFOffset, long stringsOffset, List<int> strTableOffsets, ref long propertiesOffset, int largestPropsSize)
         {
             bw.BaseStream.Seek(materialOffset,SeekOrigin.Begin);
-            bw.Write(stringTableOffset + strTableOffsets[NameOffsetIndex]);
+            
+            bw.Write(stringsOffset + strTableOffsets[NameOffsetIndex]);
             bw.Write(HelperFunctions.Murmur3Hash(Encoding.Unicode.GetBytes(Name)));
-            if(type == MDFTypes.RE7)
+            
+            if (type == MDFTypes.RE7)
             {
                 bw.Write((long)0);
             }
@@ -586,31 +693,34 @@ namespace MDF_Manager.Classes
             {
                 propSize += 1;
             }
+            long pos = bw.BaseStream.Position;
             bw.Write(propSize);
             bw.Write(Properties.Count);
             bw.Write(Textures.Count);
             if(type >= MDFTypes.MHRiseRE8)
             {
-                bw.Write((long)0);
+                bw.Write(gpbf0);
+                bw.Write(gpbf1);
             }
             bw.Write((uint)ShaderType);
             if (type >= MDFTypes.SF6)
             {
-                bw.Write((int)0);
+                bw.Write(unk0);
             }
             bw.Write(GenerateFlagsSection());
             if (type >= MDFTypes.SF6)
             {
-                bw.Write((long)0);
+                bw.Write(unk1);
+                bw.Write(unk2);
             }
             bw.Write(propHeaderOffset);
             bw.Write(textureOffset);
             if(type >= MDFTypes.MHRiseRE8)
             {
-                bw.Write(stringTableOffset);
+                bw.Write(GPBFOffset);
             }
             bw.Write(propertiesOffset);
-            bw.Write(stringTableOffset + strTableOffsets[MMOffsetIndex]);
+            bw.Write(stringsOffset + strTableOffsets[MMOffsetIndex]);
             if (type >= MDFTypes.SF6)
             {
                 bw.Write((long)0);
@@ -619,18 +729,34 @@ namespace MDF_Manager.Classes
             materialOffset += GetSize(type);
             for(int i = 0; i < Textures.Count; i++)
             {
-                Textures[i].Export(bw, type, ref textureOffset, stringTableOffset, strTableOffsets);
-            }
+                Textures[i].Export(bw, type, ref textureOffset, stringsOffset, strTableOffsets);
+            }            
             long basePropOffset = propertiesOffset;//subtract by current prop offset to make inner offset
             for(int i = 0; i < Properties.Count; i++)
             {
-                Properties[i].Export(bw, type, ref propHeaderOffset, ref propertiesOffset, basePropOffset, stringTableOffset, strTableOffsets);
+                Properties[i].Export(bw, type, ref propHeaderOffset, ref propertiesOffset, basePropOffset, stringsOffset, strTableOffsets);
+            }
+            //SILVER: Write GPUBuffers
+            
+            for (int i = 0; i < GPUBuffersList.Count; i++)
+            {
+                bw.BaseStream.Seek(GPBFOffset + i*GetGPBFSize(), SeekOrigin.Begin);
+                GPUBuffer buffer = GPUBuffersList[i];
+                bw.Write(stringsOffset + strTableOffsets[buffer.NameOffsetIndex]);
+                bw.Write(buffer.GPBFNameUTF16Hash);
+                bw.Write(buffer.GPBFNameASCIIHash);
+                //bw.Write(Encoding.Unicode.GetBytes(buffer.GPUBufferName));
             }
             if ((basePropOffset + propSize) != propertiesOffset)
             {
-                Int64 diff = basePropOffset + propSize - propertiesOffset;
-                propertiesOffset += diff;
+                //Int64 diff = basePropOffset + propSize - propertiesOffset;
+                //propertiesOffset += diff;
+                propertiesOffset = basePropOffset + largestPropsSize;
             }
+            long endPos = bw.BaseStream.Position;
+            bw.BaseStream.Seek(pos, SeekOrigin.Begin);
+            bw.Write((int)(largestPropsSize));
+            bw.BaseStream.Seek(endPos, SeekOrigin.Begin);
         }
     }
 }

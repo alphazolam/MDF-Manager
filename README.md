@@ -1,7 +1,7 @@
 # MDF-Manager
 A C# WPF GUI application to edit RE Engine material files (*.mdf2)
 
-# Usage
+# Usage:
 Open a compatible mdf file by clicking File -> Open, or by simply dropping the file onto the program. You can save the currently selected mdf by pressing File -> Save,
 or File -> Save As to save it under a different name. 
 
@@ -17,10 +17,13 @@ knowledge of shader coding.
 
 The color of certain UI elements can be changed by clicking Theme at the top of the program.
 
-# Installation
+# Installation:
+### Prerequisite: [.NET5 SDK 5.0.408](https://dotnet.microsoft.com/en-us/download/dotnet/5.0) or [.NET SDK 8.0.300](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+
 Just download the most recent release from the sidebar to the right. If you would like to build the project, open the solution in Visual Studio, right click on the 
 MDF-Manager project and select "Restore NuGet Packages", then build the project.
 
-# Credits
+# Credits:
+* **Silvris** - for creating the original version of the tool.
 * **Che, Darkness, and alphaZomega** - for MDF structure documentation
 * **AsteriskAmpersand** - his mrl3 editor served as a general inspiration for the layout and library/compendium functionality

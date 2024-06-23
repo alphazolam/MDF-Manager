@@ -5,8 +5,15 @@
     <TargetFramework>net5.0-windows</TargetFramework>
     <RootNamespace>MDF_Manager</RootNamespace>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>ValIcon.ico</ApplicationIcon>
+    <ApplicationIcon>MDF-Manager_Icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Backup2\**" />
+    <EmbeddedResource Remove="Backup2\**" />
+    <None Remove="Backup2\**" />
+    <Page Remove="Backup2\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="Resources\downarrow.png" />
@@ -21,6 +28,11 @@
   <ItemGroup>
     <Resource Include="Resources\downarrow.png" />
     <Resource Include="Resources\uparrow.png" />
+	<Resource Include="Resources\icons\icon_open.png" />
+	<Resource Include="Resources\icons\icon_save.png" />
+	<Resource Include="Resources\icons\icon_saveas.png" />
+	<Resource Include="Resources\icons\icon_saveall.png" />
+	<Resource Include="Resources\icons\icon_batch.png" />
   </ItemGroup>
 
 </Project>
