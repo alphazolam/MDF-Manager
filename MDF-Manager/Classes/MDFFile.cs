@@ -157,7 +157,7 @@ namespace MDF_Manager.Classes
             return outputBuff;
         }
 
-        public void Export(BinaryWriter bw,MDFTypes type)
+        public void Export(BinaryWriter bw, MDFTypes type)
         {
             bw.Write(magic);
             bw.Write((short)1);
@@ -249,7 +249,7 @@ namespace MDF_Manager.Classes
                     adjustedSize++;
                 while (adjustedSize % 64 != 0)
                     adjustedSize++;*/
-                Materials[i].Export(bw,type, ref materialOffset, ref textureOffset, ref propHeadersOffset, runningGPBFStart, stringTableOffset, strTableOffsets, ref propertiesOffset, Materials[i].matSize);
+                Materials[i].Export(bw, type, ref materialOffset, ref textureOffset, ref propHeadersOffset, runningGPBFStart, stringTableOffset, strTableOffsets, ref propertiesOffset, Materials[i].matSize);
                 runningGPBFStart += Materials[i].GPBFCount * Materials[i].GetGPBFSize();
             }
         }

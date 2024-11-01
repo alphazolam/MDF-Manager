@@ -77,6 +77,7 @@ namespace MDF_Manager.Classes
         Sunbreak = 23,
         SF6 = 31,
         DD2 = 40,
+        MHWilds = 45,
     }
 
     public class BooleanHolder : INotifyPropertyChanged
@@ -160,10 +161,11 @@ namespace MDF_Manager.Classes
         public int GPBF0 { get; set; }
         public int GPBF1 { get; set; }
         public int GetGPBFSize() { return 16; }
+        public int MaterialPropertyCount { get; set; }
+        public int MaterialTextureCount { get; set; }
         public ObservableCollection<BooleanHolder> flags { get; set; }
         public List<TextureBinding> Textures { get; set; }
         public List<IVariableProp> Properties { get; set; }
-
         public List<GPUBuffer> GPUBuffers { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -463,7 +465,9 @@ namespace MDF_Manager.Classes
             int PropBlockSize = br.ReadInt32();
             matSize = PropBlockSize;
             int PropertyCount = br.ReadInt32();
+            MaterialPropertyCount = PropertyCount;
             int TextureCount = br.ReadInt32();
+            MaterialTextureCount = TextureCount;
             if(type >= MDFTypes.MHRiseRE8)
             {
                 gpbf0 = br.ReadInt32();
@@ -491,7 +495,7 @@ namespace MDF_Manager.Classes
                 //it's possible that this is an offset for something that is not used by most mdfs, this will need to be looked into
                 //given the extra Int64, I find this very likely
                 */
-                //SILVER: This is only used in DD2
+                //SILVER: This is only used in games after DD2, but possibly used in some SF6 MDFs. 10.31.2024
                 GPBFOffset = br.ReadInt64();
             }
             Int64 PropDataOff = br.ReadInt64();

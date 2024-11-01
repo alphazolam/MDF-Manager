@@ -11,7 +11,7 @@
         xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Closing="Window_Closing"
-        Title="MDF Manager 1.70" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="2160" MaxWidth="3840">
+        Title="MDF Manager 1.80" Background="#EEEEEE" MinHeight="800" MinWidth="1200" MaxHeight="2160" MaxWidth="3840">
     <Window.Resources>
         <ResourceDictionary>
             <SolidColorBrush x:Key="TextColor" Color="Black"/>
@@ -217,6 +217,14 @@
                         <StackPanel Grid.Column="4" Grid.ColumnSpan="4" Grid.Row="0" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
                             <Label Foreground="{DynamicResource TextColor}" Content="MasterMaterial Path: "/>
                             <Label Foreground="{DynamicResource TextColor}" Margin="5,0,0,0" Content="{Binding ElementName=MatSelect, Path=SelectedItem.MasterMaterial}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="0" HorizontalAlignment="Left" Margin="10,0,0,-40" VerticalAlignment="Center" Orientation="Horizontal">
+                            <Label Foreground="{DynamicResource TextColor}" Content="Material Texture Count: "/>
+                            <Label Foreground="{DynamicResource TextColor}" Margin="11,0,0,0" Content="{Binding ElementName=MatSelect, Path=SelectedItem.MaterialTextureCount}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="0" HorizontalAlignment="Left" Margin="10,0,0,-70" VerticalAlignment="Center" Orientation="Horizontal">
+                            <Label Foreground="{DynamicResource TextColor}" Content="Material Property Count: "/>
+                            <Label Foreground="{DynamicResource TextColor}" Margin="5,0,0,0" Content="{Binding ElementName=MatSelect, Path=SelectedItem.MaterialPropertyCount}"/>
                         </StackPanel>
                         <ComboBox Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" Height="20" Width="Auto" Margin="10,0,0,0" ItemsSource="{Binding ShadingTypes}" SelectedItem="{Binding ElementName=MatSelect, Path=SelectedItem.ShaderType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <xctk:CheckComboBox Background="{DynamicResource ForegroundColor}" Foreground="{DynamicResource TextColor}" Grid.Row="1" Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0" HorizontalAlignment="Stretch" Height="20" Grid.ColumnSpan="2" Delimiter=", " ItemsSource="{Binding ElementName=MatSelect, Path=SelectedItem.flags}" DisplayMemberPath="Name" SelectedMemberPath="Selected"/>

@@ -27,7 +27,7 @@ namespace MDF_Manager
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static string MDFFilter = "All readable files (*.mdf2)|*.mdf2.6*;*.mdf2.10*;*.mdf2.13*;*.mdf2.19*;*.mdf2.21*;*.mdf2.23*;*.mdf2.31*;*.mdf2.32*;*.mdf2.40*|" +
+        public static string MDFFilter = "All readable files (*.mdf2)|*.mdf2.6*;*.mdf2.10*;*.mdf2.13*;*.mdf2.19*;*.mdf2.21*;*.mdf2.23*;*.mdf2.31*;*.mdf2.32*;*.mdf2.40*;*.mdf2.45*|" +
             "RE7 Material file (*.mdf2.6)|*.mdf2.6*|" +
             "RE2/DMC5 Material file (*.mdf2.10)|*.mdf2.10*|" +
             "RE3 Material file (*.mdf2.13)|*.mdf2.13*|" +
@@ -36,7 +36,8 @@ namespace MDF_Manager
             "MH Rise Sunbreak Material file (*.mdf2.23)|*.mdf2.23*|" +
             "Street Fighter 6 Material file (*.mdf2.31)|*.mdf2.31*|" +
             "RE4 Material file (*.mdf2.32)|*.mdf2.32*|" +
-            "Dragon's Dogma 2 Material file (*.mdf2.40)|*.mdf2.40*";
+            "Dragon's Dogma 2 Material file (*.mdf2.40)|*.mdf2.40*|" +
+            "Monster Hunter Wilds Material file (*.mdf2.45)|*.mdf2.45*";
         public ObservableCollection<MDFFile> MDFs { get; set; }
         public Defs defs { get; set; }
         public Library lib { get; set; }
@@ -309,7 +310,7 @@ namespace MDF_Manager
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 for(int i = 0; i < files.Length; i++)
                 {
-                    if (files[i].Contains(".6") || files[i].Contains(".10") || files[i].Contains(".13") || files[i].Contains(".19") || files[i].Contains(".21") || files[i].Contains(".23") || files[i].Contains(".31") || files[i].Contains(".32") || files[i].Contains(".40"))
+                    if (files[i].Contains(".6") || files[i].Contains(".10") || files[i].Contains(".13") || files[i].Contains(".19") || files[i].Contains(".21") || files[i].Contains(".23") || files[i].Contains(".31") || files[i].Contains(".32") || files[i].Contains(".40") || files[i].Contains(".45"))
                     {
                         BinaryReader readFile = HelperFunctions.OpenFileR(files[i], Encoding.Unicode);
                         if(readFile != null)
@@ -627,6 +628,9 @@ namespace MDF_Manager
                                 break;
                             case MDFTypes.DD2:
                                 parent = compendium.DD2;
+                                break;
+                            case MDFTypes.MHWilds:
+                                parent = compendium.MHWilds;
                                 break;
                             default:
                                 break;
